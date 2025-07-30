@@ -16,7 +16,7 @@
 #### Ejercicios
 
 - [Ejercicios](clase 1/Clase 1-Ejercicios-Consignas.nb.html)
-- [Resueltos](clase 1/Resueltos/Clase 1-Ejercicios-Resueltos.R)
+- [Resueltos](clase 1/Resueltos/Clase1-Ejercicios-Resueltos.R)
 
 #### Datasets para ejercicios
 - [Dataset EPH](clase 1/datos/usu_individual_T122.txt)
