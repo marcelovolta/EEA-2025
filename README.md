@@ -1,12 +1,4 @@
-# EEA-UBA 2024
-
-## Ayudantes
-
-Juan Manuel Barriola
-
-Franco Mastelli
-
-Fernando Gonzalez
+# EEA-UBA 2025
 
 ### Clase 1: Fundamentos de programación en R
 
