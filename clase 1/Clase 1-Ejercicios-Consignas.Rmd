@@ -1,0 +1,140 @@
+---
+title: "Ejercicios para practicar"
+author: "Lucía Babino"
+date: "16 de agosto de 2025"
+output:
+  html_notebook:
+    toc: true
+    toc_float: true
+  html_document:
+    toc: true
+    df_print: paged
+---
+
+<style type="text/css">
+div.main-container {
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+## Ejercicio 1
+ 
+#### 1) Dataset state.x77
+
+El dataset `state.x77`, disponible en el paquete base de R, contiene información numérica sobre los 50 estados de Estados Unidos. Este conjunto de datos está guardado como una **matriz**, un tipo de objeto de R que aún no vimos en clase. Las matrices son similares a los data frames, pero con la particularidad de que todas sus columnas deben ser del mismo tipo de dato (en este caso, numérico).
+
+Podés consultar el significado de cada variable ejecutando ?state.x77 o buscándolo en la pestaña de Help en RStudio.
+
+Convertí el dataset `state.x77` en un data frame usando la función `as.data.frame()`.
+
+A partir de ese data frame, respondé las siguientes preguntas:
+
+a) ¿Cuál es la población total de Estados Unidos? 
+
+b) ¿Cuál es la media de la expectativa de vida?
+
+c) ¿Cual es la mediana del ingreso en pesos argentinos?
+
+#### 2) Nueva variable
+
+Crear un dataset **df_indice** solo con las columnas de porcentaje de analfabetismo sobre población  (*Illiteracy*) y tasa de homicidios por 100.000 habitantes (*Murder*). 
+
+a) Crear una nueva variable **ilit_murd** que contenga la suma de los valores de ambas variables del dataset. 
+
+b) Encontrar los valores máximos y mínimos de esta nueva variable.  
+
+#### 3) Objetos 
+
+a) Crear un VALOR llamado _OBJETO_ definido como el resultado de la suma: 5+6
+
+b) Crear un VECTOR _VEC0_ que contenga una muestra aleatoria de números del 1 al 10 sin reemplazo y de tamaño 10, es decir, una permutación de los números del 1 al 10.
+
+c) Crear 3 vectores ( _VEC1_, _VEC2_, _VEC3_) que sean transformaciones del anterior consistentes en multiplicar por 2, elevar al cuadrado y restarle 2, respectivamente.
+
+d) Crear 3 vectores con la misma cantidad de elementos que VEC0, pero con variables string (texto) ( _VEC4_, _VEC5_, _VEC6_). Hint: usar la funcion ```rep()``` en los casos que se quiera repetir un caracter.   
+
+e) Crear un dataframe _DFRAME_ como combinación de todos los vectores creados previamente.
+
+f) Crear una lista _LA_LISTA_ con el _OBJETO_ creado en el punto a), alguno de los vectores y el _DFRAME_ del punto e).
+
+#### 4) Loops
+
+a) Para todos los valores del vector _VEC0_, *imprimir* mediante un loop el triple de dichos valores. 
+
+b) Armar un loop que itere sobre los valores únicos de la variable _VEC6_ del dataframe _DFRAME_. Para cada valor de _VEC6_, imprimir los valores de _VEC0_ correspondientes, combinados con su valor de _VEC6_ en un mismo string. Por ejemplo, si `i` es un valor único de _VEC6_, se espera imprimir una combinación de _VEC6 == i_ y los valores de _VEC0_ asociados a ese `i`.
+
+Ejemplo concreto:
+
+Si tenés este dataframe:
+
+```{r, eval = FALSE}
+DFRAME <- data.frame(
+  VEC6 = c("A", "A", "B", "B", "C"),
+  VEC0 = c(1, 2, 3, 4, 5)
+)
+```
+
+
+
+Se espera que la salida sea algo así como:
+
+```{r, eval = FALSE}
+# [1] "A 1" "A 2"
+# [1] "B 3" "B 4"
+# [1] "C 5"
+```
+
+c) Reescribir el _VEC1_ del _DFRAME_ para que sus elementos sean: el doble de _VEC_0_ cuando éste sea mayor a 2 e iguales a _VEC_0_ para el resto de los casos.
+
+#### 5) Funciones
+
+a) Crear una función llamada _Hola_Mundo()_ que imprima el texto "Hola mundo"
+
+b) Crear una función llamada _Sumatoria_enteros()_ que reciba como argumento un número entero x y devuelva la suma de todos los números enteros desde 1 hasta x (inclusive).
+
+Por ejemplo:
+Sumatoria_enteros(4) debe devolver 1 + 2 + 3 + 4 = 10.
+
+c) Crear una función _primer_elem_df_ cuyo parámetro/input X sea un data frame y que devuelva la dimensión del data frame y un texto que diga *"El primer elemento es par"* en caso de que así lo fuera o *"El primer elemento no es par"* en caso contrario. Evaluar la función creada para el dataset _DFRAME_.
+
+## Ejercicio 2
+ 
+#### 1) Dataset EPH
+
+El INDEC^[Fuente: https://www.indec.gob.ar/indec/web/Institucional-Indec-BasesDeDatos] publica las bases de microdatos de la Encuesta Permanente de Hogares (EPH). Para este ejercicio deberán descargar la base "usu_individual_T122.txt" que corresponde a la base Individual del 1er trimestre de 2022 y se encuentra disponible en el campus como `Datos EPH`. 
+
+a) Levantar y guardar la base en un objeto llamado _individualt122_. Tener en cuenta que la misma usa “;” para separar columnas y “,” como separador decimal.
+
+
+b) Visualizar el contenido del dataset. Hint: explorar la funcion ```str()``` para visualizar el contenido de la base, identificando dimensión, tipos de variables y primeros valores de cada una.   
+
+
+#### 2) Funciones
+
+Crear una función llamada _sumar_columna()_ que reciba como argumentos un data frame (df) y el nombre de una variable numérica del data frame (variable, como string), y devuelva la suma total de dicha variable.
+
+a) Evalúela para la columna "PONDERA" del dataframe _individual_T122_.
+
+b) Utilizar dicha función para calcular la suma de "PONDERA" por Sexo (variable CH04), sabiendo que 1 = varón y 2 = mujer.
+
+c) Crear una función llamada _resumen_columna()_ que reciba como argumentos un data frame (df) y el nombre de una variable numérica (variable, como string), y devuelva un data frame con dos columnas: 
+
+- suma_columna: suma total de los valores de la columna indicada 
+- n_observaciones: cantidad de filas del data frame
+
+d) Utilizar la función _resumen_columna()_ para calcular:
+
+- la frecuencia muestral (cantidad de personas en la muestra)
+
+- la frecuencia poblacional (suma de las ponderaciones)
+
+Para ello, usar la variable "PONDERA", que representa las ponderaciones individuales de la encuesta.
+
+e) Utilizar la función _resumen_columna()_ para calcular, por sexo:
+
+- la frecuencia muestral (cantidad de personas en la muestra)
+
+- la frecuencia poblacional (suma de las ponderaciones)
+
