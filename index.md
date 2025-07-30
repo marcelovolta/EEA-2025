@@ -8,8 +8,7 @@
 
 #### Slides de la presentación
 
-- [Slides: Fundamentos de programación en R](clase 1/Slides 1 - Introducción a R.pdf)
-Slides 1 - Introducción a R.pdf
+- [Fundamentos de programación en R](clase 1/Slides 1 - Introducción a R.pdf)
 
 #### Apuntes
 
