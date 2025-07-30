@@ -12,5 +12,5 @@ Materiales del curso de Enfoque Estadístico del Aprendizaje de la Maestría de 
 
 - [Introducción al entorno R](clase 1/Clase 1 - Introduccion a R.nb.html)
 - [Loops, condicionales y funciones](clase 1/Clase 1 - Loops, condicionales y funciones.nb.html)
-- [Ejercicios](clase 1/Ejercicios - Consignas.nb.html)
+- [Ejercicios](clase 1/Ejercicios -Consignas.nb.html)
 - [Resultados](clase 1/Resultados - Resueltos.R)
