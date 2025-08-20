@@ -3,12 +3,9 @@
 - Lucía Babino
 - Daphne Estrada
 - Bernardo Español
+- Pamela Eugenia Pairo
 
 ### Clase 1: Fundamentos de programación en R
-
-#### Slides de la presentación
-
-- [Fundamentos de programación en R](clase 1/Slides 1 - Introducción a R.pdf)
 
 #### Apuntes
 
