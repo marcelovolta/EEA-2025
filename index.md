@@ -9,8 +9,8 @@
 
 #### Apuntes
 
-- [Introducción al entorno R](clase 1/Clase 1 - Introduccion a R.nb.html)
-- [Loops, condicionales y funciones](clase 1/Clase 1 - Loops, condicionales y funciones.nb.html)
+- [Introducción al entorno R](https://github.com/eea-uba/EEA-2025/blob/main/clase%201/repaso_r.qmd)
+- [Repaso Inferencia](https://github.com/eea-uba/EEA-2025/blob/main/clase%201/repaso.pdf)
   
 #### Ejercicios
 
