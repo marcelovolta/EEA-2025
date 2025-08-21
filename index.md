@@ -21,6 +21,6 @@
 - [Dataset EPH](clase 1/datos/usu_individual_T122.txt)
 
 
-#### Curso on line de Lucía Babino
-[Análisis y visualización de datos con R](https://www.youtube.com/results?sp=mAEB&search_query=lucia+babino](https://www.youtube.com/playlist?list=PLN2e9R_DoC0RryeJcPrnMJZPfuQA_34jn)
+#### Curso on line de Análisis y visualización de datos con R (Lucía Babino)
+- [Clase 0: Introducción a R y RStudio](https://www.youtube.com/watch?v=CwMMtc9T6bA&list=PLYqQ3ecJzraGAcMR3V7hXddbrabB4q0i0)
 
