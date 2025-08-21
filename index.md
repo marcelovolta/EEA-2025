@@ -22,5 +22,5 @@
 
 
 #### Curso on line de Lucía Babino
-[Análisis y visualización de datos con R](https://www.youtube.com/results?sp=mAEB&search_query=lucia+babino)
+[Análisis y visualización de datos con R](https://www.youtube.com/results?sp=mAEB&search_query=lucia+babino](https://www.youtube.com/playlist?list=PLN2e9R_DoC0RryeJcPrnMJZPfuQA_34jn)
 
