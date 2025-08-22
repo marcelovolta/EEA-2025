@@ -9,7 +9,7 @@
 
 #### Apuntes
 
-- [Introducción al entorno R](https://github.com/eea-uba/EEA-2025/blob/main/clase%201/repaso_r.qmd)
+- [Introducción al entorno R](https://eea-uba.github.io/EEA-2025/clase%201/repaso_r.html)
 - [Repaso Inferencia](https://github.com/eea-uba/EEA-2025/blob/main/clase%201/repaso.pdf)
   
 #### Ejercicios
