@@ -1,0 +1,155 @@
+---
+title: "Ejercicios de Práctica"
+author: "Lucía Babino^[Basado en la clase de Juan Barriola, Fernando González y Franco Mastelli de 2024]"
+date: "30 de Agosto de 2025"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    df_print: paged
+# Si no usás notebook, podés borrar esta salida:
+#  html_notebook:
+#    toc: true
+#    toc_float: true
+#    toc_depth: 2
+---
+
+<style type="text/css">
+div.main-container {
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+
+<!-- --- -->
+<!-- title: "Ejercicios de Práctica" -->
+<!-- author: "Juan Barriola y Sofía Perini" -->
+<!-- date: "04 de Septiembre de 2021" -->
+<!-- output: -->
+<!--   html_document: -->
+<!--     toc: true -->
+<!--     df_print: paged -->
+<!--   html_notebook: -->
+<!--     toc: true -->
+<!--     toc_float: true -->
+<!--     depth: 2 -->
+<!--   pdf_document: -->
+<!--     toc: true -->
+<!-- --- -->
+
+<!-- <style type="text/css"> -->
+<!-- div.main-container { -->
+<!--   max-width: 1600px; -->
+<!--   margin-left: auto; -->
+<!--   margin-right: auto; -->
+<!-- } -->
+<!-- </style> -->
+
+# Ejercicios Clase 2
+
+## Ejercicio 1: Precios y dólar
+
+Realizar un informe de la macroeconomía argentina haciendo análisis exploratorios del Indice de Precios al Consumidor (IPC) y el tipo de cambio oficial entre el dólar y el peso argentino según lo reportado por el medio Ámbito Financiero. 
+
+El IPC es un indice que mide la evolución de una canasta de precios definida por el INDEC. Los datos del IPC a analizar tienen como año base diciembre de 2016, al cual le corresponde el índice 100. Los precios se encuentran con cuatro niveles de apertura:
+
+  * General: Indice de Precios de toda la canasta de bienes y servicios considerada en el análisis
+
+  * Estacional: Bienes y servicios con comportamiento estacional. Por ejemplo: frutas y verduras
+
+  * Regulados: Bienes y servicios cuyos precios están sujetos a regulación o tienen alto componente impositivo. Por ejemplo: electricidad
+
+  * Núcleo: : Resto de los grupos del IPC
+  
+Para más información sobre el IPC pueden visitar la siguiente página del INDEC: https://www.indec.gob.ar/indec/web/Nivel4-Tema-3-5-31
+
+La base de datos del dolar tiene frecuencia diaria y comienza en junio de 2015. Cuenta con el tipo de cambio de compra y venta del dólar.
+
+### Dólar
+
+1. Leer el dataset __dolar_oficial_ambito.csv__.
+2. Crear la variable cotización_promedio, realizando el promedio entre compra y venta para cada día
+3. Convertir la variable fecha de string a datetime. Crear las variables de año, mes y día 
+4. Graficar la evolución diaria de la cotización promedio
+5. Crear un dataframe `dolar_mensual` con la mediana de la cotización promedio para cada año y mes (esta será la cotización mensual del dólar oficial)
+
+### IPC
+
+1. Leer el dataset __ipc-mensual.csv__.
+2. Crear un nuevo data frame `ipc_tidy` modificando el dataset original para que cumpla con la definición de *tidy data*: cada fila debe representar una combinación única de **Apertura** y **Fecha**, y cada columna debe contener una sola variable.  
+El resultado debe tener tres columnas: `Apertura`, `Fecha` e `Indice`.  
+
+Por ejemplo, las primeras cuatro filas del dataset deberían quedar de la siguiente forma:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+ipc <- read.csv("datos/ipc-mensual.csv")
+ipc_tidy <- ipc %>% pivot_longer(cols = -Apertura, 
+                                 names_to = "Fecha",
+                                 values_to = "Indice")
+head(ipc_tidy, 4)
+```
+
+
+<!-- | Apertura      | Fecha  | Indice | -->
+<!-- |---------------|--------|--------| -->
+<!-- | Nivel general | Dec.16 | 100.0  | -->
+<!-- | Nivel general | Jan.17 | 101.6  | -->
+<!-- | Nivel general | Feb.17 | 103.7  | -->
+<!-- | Nivel general | Mar.17 | 106.1  | -->
+
+*Pista*: piensen si tienen que usar `pivot_longer` o `pivot_wider`.
+
+3. Transformar la variable `fecha` a tipo *date-time* y crear las variables `año` y `mes`.
+4. Graficar la evolución del nivel general del IPC. Es decir, graficar la variable `Indice` en función de `Fecha` para las observaciones cuyo valor de `Apertura` sea "Nivel general". 
+¿Qué ocurre si realizamos este gráfico sin transformar la variable `Fecha` a tipo *date-time*?
+5. Graficar la evolución del ipc de los 4 niveles de apertura en un mismo gráfico.
+
+### IPC y Dolar 
+
+1. Realizar un join de los conjuntos de datos `ipc_tidy` y `dolar_mensual` según las variables `año` y `mes`. El resultado debe contener únicamente las observaciones donde `año` y `mes` coinciden en ambos data frames. *Pista*: usar la función `inner_join()`.
+2. Agregar al data frame anterior una variable `indice_dolar` que contenga el indice de evolución del dólar con base en Diciembre de 2016. La fómula de calculo a utilizar es:
+$Indice_t = \frac{cotizacion_t * 100}{cotizacion_{dic2016}}$
+donde $cotizacion_t$ es la cotización del dolar a tiempo t y $cotizacion_{dic2016}$ la cotización del dolar de Diciembre de 2016.
+3. Calcular la media, el desvío estándar, la mediana y el rango del índice del dólar y del IPC General (es decir el índice que corresponde a Nivel General de la variable `Apertura`) para cada uno de los años.
+4. Graficar la evolución del indice del dólar y del nivel general del IPC.
+5. Graficar la evolución del indice del dólar y de los 4 grupos de IPC.
+
+## Ejercicio 2: Trabajo con strings y fechas
+
+Limpiar una base pública de ataques de tiburones para luego poder hacer algunos análisis exploratorios
+
+1.a. Leer el dataset __ataques_tiburones.csv__.
+
+1.b. Seleccionar las variables *Case Number*, *Date* y *Country*.
+
+**Limpieza variable pais**
+
+2. Obtener los valores únicos de la variable *Country* (país). Evaluar qué problemas presenta esta variable para estandarizarla, es decir, para que todos los strings tengan un mismo formato.
+
+3.a. Llevar los nombres a mayúscula.
+
+3.b. Quitar los espacios en blanco a izquierda y derecha.
+
+3.c. Quitar el signo de pregunta que aparace al final de ciertos nombres.
+
+**Limpieza variable Date**
+
+4. Revisar la variable *Date* y evaluar qué problemas presenta esta variable para estandarizarla.
+5. Eliminar la palabra "Reported " (con su espacio en blanco) de la fecha.
+6. Convertir la variable *Date* de character
+a datetime. Crear las variables de año, mes y día.
+
+**Gráficos**
+
+7. Quedarse con los ataques desde el año 1800 en adelante.
+8. Crear un dataframe con la cantidad de ataques totales por país desde el 1800 en adelante.
+9. Realizar un gráfico de barras para los 20 países con mayor cantidad de ataques.
+10. Realizar un gráfico de la cantidad de ataques por año desde 1800.
+11. Realizar un gráfico de la cantidad de ataques por mes para AUSTRALIA y USA (Estados Unidos) para construir el ciclo anual de ataques en estos países.
+
