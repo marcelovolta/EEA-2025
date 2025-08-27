@@ -29,5 +29,26 @@
 #### Datasets para ejercicios
 - [Dataset EPH](clase 1/datos/usu_individual_T122.txt)
 
+### Clase 2: Introducción al paquete Tidyverse de R
+
+Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`stringr`) y gráficos (`ggplot2`)
+
+#### Apuntes
+
+- [Tidyverse](clase 2/Clase 2 - Tidyverse.nb.html)
+- [Distintos tipos de Join (opcional)](clase 2/Clase 2. Distintos tipos de Join (OPCIONAL).nb.html)
+
+#### Ejercicios
+
+- [Ejercicios](clase 2/Clase 2-Ejercicios.html )
+- [Resueltos](clase 2/resueltos)
+
+#### Datasets para ejercicios
+
+- [Dataset dólar](datos/dolar_oficial_ambito.csv)
+- [Dataset IPC](datos/ipc-mensual.csv)
+- [Dataset ataques tiburones](datos/ataques_tiburones.csv)
+
+  
 
 
