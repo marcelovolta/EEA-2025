@@ -41,7 +41,7 @@ Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`strin
 #### Ejercicios
 
 - [Ejercicios](clase 2/Clase2-Ejercicios.html)
-- [Resueltos](clase 2/resueltos)
+- [Resueltos](clase 2/Clase2-Resueltos.R)
 
 #### Datasets para ejercicios
 
