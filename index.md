@@ -45,9 +45,9 @@ Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`strin
 
 #### Datasets para ejercicios
 
-- [Dataset dólar](datos/dolar_oficial_ambito.csv)
-- [Dataset IPC](datos/ipc-mensual.csv)
-- [Dataset ataques tiburones](datos/ataques_tiburones.csv)
+- [Dataset dólar](clase 2/datos/dolar_oficial_ambito.csv)
+- [Dataset IPC](clase 2/datos/ipc-mensual.csv)
+- [Dataset ataques tiburones](clase 2/datos/ataques_tiburones.csv)
 
   
 
