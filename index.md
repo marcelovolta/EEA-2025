@@ -34,6 +34,10 @@
 
 Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`stringr`) y gráficos (`ggplot2`)
 
+#### Presentación
+
+- [Clase 2 - Tidyverse](clase 2/PresentacionClase2.html)
+
 #### Apuntes
 
 - [Tidyverse](clase 2/Clase 2 - Tidyverse.nb.html)
