@@ -36,8 +36,7 @@ Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`strin
 
 #### Presentación
 
-- [Clase 2 - Tidyverse - html](clase 2/PresentacionClase2.html)
-- [Clase 2 - Tidyverse - pdf](clase 2/Clase 2_ Tidyverse_2.pdf)
+- [Clase 2 - Tidyverse](clase 2/Clase 2_ Tidyverse_2.pdf)
 
 #### Apuntes
 
