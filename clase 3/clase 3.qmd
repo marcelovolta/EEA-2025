@@ -1,0 +1,186 @@
+---
+title: "Introducción a regresión lineal simple en R"
+author: "Bernardo L. Español"
+format:
+  html:
+    html-math-method: katex
+    self-contained: true
+    df-print: paged
+execute:
+  warning: false
+---
+
+## Paquetes
+
+```{r}
+library(tidyverse)
+library(broom)
+```
+
+## Lectura de datos
+
+```{r}
+df <- readr::read_delim(
+  file = "usu_individual_T125.txt",
+  delim = ";",
+)
+df
+```
+
+## Renombramos
+
+```{r}
+df <- df %>%
+  rename(
+    edad = CH06,
+    salario = P21
+  )
+df
+```
+
+## Filtro de población objetivo
+
+```{r}
+# podemos ir viendo qué cantidad de datos nos quedan con
+nrow(df)
+```
+
+```{r}
+df_filt <- df %>%
+  filter(
+    salario > 0,
+    ESTADO == 1,              # Ocupados
+  )
+nrow(df_filt)
+```
+
+```{r}
+ggplot(df_filt, aes(x = edad, y = salario)) +
+  geom_point(alpha = 0.2) +
+  labs(
+    x = "Edad",
+    y = "Salario",
+  ) +
+  theme_minimal()
+```
+
+```{r}
+ggplot(df_filt, aes(x = edad, y = salario)) +
+  geom_point(alpha = 0.1) +
+  labs(
+    x = "Edad",
+    y = "Salario",
+  ) +
+  ylim(c(500000, 800000)) +
+  theme_minimal()
+```
+
+# Salario promedio por edad
+```{r}
+edad_salario <- df_filt %>%
+  group_by(edad) %>%
+  summarise(salario_prom = mean(salario)) %>%
+  ungroup() %>%
+  arrange(edad)
+
+edad_salario
+```
+
+```{r}
+ggplot(edad_salario, aes(x = edad, y = salario_prom)) +
+  geom_point(alpha = 0.8) +
+  labs(
+    x = "Edad",
+    y = "Salario promedio",
+  ) +
+  theme_minimal()
+```
+
+
+```{r}
+df_filt_18_40 <- df %>%
+  filter(
+    salario > 0,
+    ESTADO == 1,  # Ocupados
+    between(edad, 18, 40)
+  )
+nrow(df_filt_18_40)
+```
+
+```{r}
+edad_salario_18_40 <- df_filt_18_40 %>%
+  group_by(edad) %>%
+  summarise(salario_prom = mean(salario)) %>%
+  ungroup() %>%
+  arrange(edad)
+
+edad_salario_18_40
+```
+
+```{r}
+ggplot(edad_salario_18_40, aes(x = edad, y = salario_prom)) +
+  geom_point(alpha = 0.8) +
+  labs(
+    x = "Edad",
+    y = "Salario promedio",
+  ) +
+  theme_minimal()
+```
+
+
+## Modelo lineal simple
+
+```{r}
+x_i <- edad_salario_18_40$edad
+y_i <- edad_salario_18_40$salario_prom
+x_prom <- mean(x_i)
+y_prom <- mean(y_i)
+b1 <- sum((x_i - x_prom) * (y_i - y_prom))/sum((x_i - x_prom)^2)
+b0 <- y_prom - b1 * x_prom
+cat(b0, b1)
+```
+
+```{r}
+mod <- lm(formula = salario_prom ~ edad, data = edad_salario_18_40)
+mod
+```
+
+```{r}
+b0 = mod$coefficients[1]
+b1 = mod$coefficients[2]
+```
+
+```{r}
+ggplot(edad_salario_18_40, aes(x = edad, y = salario_prom)) +
+  geom_point() +
+  # geom_abline(intercept = b0, slope = b1, linewidth=1.5, col = "#C95E61") +
+  geom_function(fun = \(x) b0 + b1*x, linewidth = 1.5, col = "#C95E61") +
+  labs(
+    x = "Edad",
+    y = "Salario promedio",
+  ) +
+  theme_minimal()
+```
+
+```{r}
+ggplot(edad_salario, aes(x = edad, y = salario_prom)) +
+  geom_point(alpha = 0.8) +
+  geom_abline(intercept = b0, slope = b1, linewidth=1.5, col = "#C95E61") +
+  labs(
+    x = "Edad",
+    y = "Salario promedio",
+  ) +
+  scale_x_continuous(limits = c(0,65)) +
+  scale_y_continuous(limits = c(0,1200000)) +
+  theme_minimal()
+```
+
+## Predicciones y límites del modelo
+
+```{r}
+library(glue)
+
+glue("Alguien con 35 años gana en promedio ${round(b0 + 35 * b1)}")
+glue("Alguien recién nacido gana en promedio ${round(b0 + 0 * b1)}")
+glue("Alguien con 90 años gana en promedio ${round(b0 + 90 * b1)}")
+```

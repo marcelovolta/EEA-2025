@@ -57,3 +57,16 @@ Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`strin
   
 
 
+### Clase 3: Introducción a la regresión lineal simple en R
+
+#### Presentación
+
+- [Clase 3 - Presentación](<clase 3/clase 3 pres.pdf>)
+
+#### Apuntes
+
+- [Clase 3 (.qmd)](<clase 3/clase 3.qmd>)
+
+#### Dataset
+
+- [mean_salary_vs_age.csv](<clase 4/mean_salary_vs_age.csv>)
