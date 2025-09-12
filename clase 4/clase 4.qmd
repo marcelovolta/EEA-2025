@@ -1,0 +1,478 @@
+---
+title: "purrr y Regresión lineal simple a lo ML"
+author: "Bernardo L. Español"
+format:
+  html:
+    html-math-method: katex
+    self-contained: true
+    df-print: paged
+execute:
+  warning: false
+---
+
+## Init
+
+```{r}
+library(tidyverse)
+library(broom)
+library(plotly)
+
+set.seed(0)
+```
+
+# Pequeña y descontextualizada introducción a purrr
+purrr es una librería de tidyverse que contiene funciones y métodos de programación funcional para trabajar con listas y vectores.
+La función estrella de la programación funcional es `map()`. Esta sirve para aplicar una función a cada elemento de una estructura de datos, como un vector o una lista. En el fondo no es más que un loop que recorre cada elemento, le aplica la función indicada y guarda el resultado.
+
+Esto permite reemplazar bucles explícitos por una forma más clara y concisa de escribir el código.
+```r
+map(.x, .f, ...)
+```
+
+- `.x`: vector o lista de entrada  
+- `.f`: función que se quiere aplicar  
+- `...`: otros argumentos opcionales que pueda necesitar la función
+
+purrr cuenta con muchas funciones de _mapeo_, y están definidas para ser de tipado estable y siempre devolver un tipo concreto de dato:
+
+- `map()` siempre devuelve una lista.
+- `map_lgl()`, `map_int()`, `map_dbl()` y `map_chr()` devuelven un vector con datos del tipo especificado (o muere intentándolo)
+
+Por ejemplo, podemos escribir este loop
+```{r}
+l = c(1, 2, 3)
+pow_f <- function(x, p) x^p
+```
+```{r}
+out <- numeric(length(l))
+for (i in seq_along(out)){
+	out[i] = pow_f(l[i], p = 2)
+}
+out
+```
+De cualquiera de estas formas
+```{r}
+out <- map_dbl(l, pow_f, p = 2)
+out
+out <- l %>% map_dbl(pow_f, p = 2)
+out
+out <- l |> map_dbl(pow_f, p = 2)
+out
+```
+
+También tenemos las funciones `map2_*`, que nos permiten aplicar funciones usando elementos de dos listas. Por ejemplo, podemos elevar cada número de la lista a una potencia distinta
+```{r}
+l <- c(1, 2, 3, 4)
+p <- c(2, 3, 2, 5)
+map2_dbl(l, p, pow_f)
+```
+Si la función tiene más argumentos debemos convertirla en una función anónima. Por ejemplo
+```{r}
+bias_pow_p <- function(x, x0, p) (x - x0)^p
+map2_dbl(l, p, ~ bias_pow_p(x=.x, x0=0, p=.y))
+```
+En realidad podemos hacer esto, pero es una invitación a chocarla
+```{r}
+map2_dbl(l, p, bias_pow_p, x0=0)
+```
+
+Esta librería está espectacular y permite hacer muchas cosas de forma _elegante_. Las vamos a ir viendo a medida que lo necesitemos.
+
+---
+
+# Regresión lineal simple a lo ML
+## Lectura y filtro de datos
+Vamos a leer los datos, filtrarlos y guardarlos en un nuevo archivo, así nos quedamos únicamente con los datos que nos interesan.
+```{r eval=FALSE}
+df <- read_delim(
+  file = "usu_individual_T125.txt",
+  delim = ";",
+)
+df <- df %>%
+  rename(
+    age = CH06,
+    salary = P21
+  )
+df <- df %>%
+  filter(
+    salary > 0,
+    ESTADO == 1,
+  )
+df <- df %>%
+  group_by(age) %>%
+  summarise(mean_salary = mean(salary)) %>%
+  ungroup() %>%
+  arrange(age)
+
+write_csv(df, "mean_salary_vs_age.csv")
+```
+```{r}
+df <- read_csv("mean_salary_vs_age.csv")
+df <- df %>% filter(between(age, 18, 40))
+df
+```
+```{r}
+ggplot(df, aes(x = age, y = mean_salary)) +
+  geom_point(alpha = 0.8) +
+  labs(
+    x = "Edad",
+    y = "Salario promedio",
+  ) +
+  theme_minimal()
+```
+
+# Modelo lineal a lo ML
+
+A lo largo de la clase de hoy vamos a explorar distintas formas no analíticas de ajustar una recta a los pares de datos $(x_i, y_i)$.
+Al igual que cuando lo hicimos de forma analítica, para decidir qué tan buena es una recta vamos a usar como métrica el **error cuadrático medio (MSE)**:
+
+$$
+\text{MSE} = \frac{1}{N} \sum_{i=1}^N (\hat Y_i - Y_i)^2 = \text{E}((\hat{\boldsymbol{Y}} - \boldsymbol{Y})^2).
+$$
+
+Nuestro objetivo es encontrar los parámetros $(\beta_0, \beta_1)$ que minimicen:
+
+$$
+\text{MSE}(\beta_0, \beta_1 \mid \boldsymbol{X}, \boldsymbol{Y}) = \text{E}((\beta_0 + \beta_1\,\boldsymbol{X}- \boldsymbol{Y})^2)
+$$
+
+```{r}
+compute_mse_lm <- function(par, x_data, y_data) {
+  b0 <- par[1]
+  b1 <- par[2]
+  y_hat <- b0 + b1 * x_data
+  diff <- y_hat - y_data
+  mean(diff ^ 2)
+}
+
+```
+
+## Estrategia 1: Caos (o muchas rectas al azar)
+La primera estrategia va a consistir en **generar muchas rectas al azar y quedarnos con la que tenga menor MSE**.
+Procedimiento:
+
+- Partimos de una recta base: la que une el primer y el último punto del dataset (ya que nos da un rango razonable para $(\beta_0,\beta_1)$).  
+- Muestreamos muchos pares $(\beta_0, \beta_1)$ alrededor de esa base.  
+- Calculamos el MSE de cada recta y nos quedamos con el par que minimice MSE
+
+```{r}
+# Buscamos el b0 y b1 de la recta que une el primer punto y el último
+b1_init_guess <- (df$mean_salary[nrow(df)] - df$mean_salary[1])/(df$age[nrow(df)] - df$age[1])
+b0_init_guess <- df$mean_salary[1] - b1_init_guess * df$age[1]
+
+# Generamos 1000 pares (b0, b1)
+n_lines <- 1000
+lines <- tibble(
+  b0 = runif(n_lines, min = b1_init_guess-1.5*b1_init_guess, max = b1_init_guess+1.5*b1_init_guess),
+  b1 = runif(n_lines, min = b1_init_guess-1.5*b1_init_guess, max = b1_init_guess+1.5*b1_init_guess)
+)
+lines
+```
+```{r}
+# Graficamos las rectas
+ggplot(df, aes(age, mean_salary)) +
+  # Data
+  geom_point(size = 2) +
+  # Guess inicial
+  geom_abline(intercept = b0_init_guess, slope = b1_init_guess, linewidth = 1, col = 'black', linetype = "dashed") +
+  # Todas las rectas
+  geom_abline(data = lines, aes(intercept = b0, slope = b1), alpha = 0.4) +
+  # Labels y theme
+  labs(x = "Edad", y = "Salario promedio") +
+  theme_minimal()
+```
+```{r}
+# Calculamos el MSE para cada recta
+lines <- lines %>%
+  mutate(
+    mse = map2_dbl(b0, b1, ~ compute_mse_lm(c(.x, .y), df$age, df$mean_salary)),
+    mse_log_scale = map2_dbl(b0, b1, ~ log(compute_mse_lm(c(.x, .y), df$age, df$mean_salary)))
+  )
+lines
+```
+```{r}
+# Graficamos las rectas con colores
+ggplot(df, aes(age, mean_salary)) +
+  # Data
+  geom_point(size = 2) +
+  # Guess inicial
+  geom_abline(intercept = b0_init_guess, slope = b1_init_guess, linewidth = 1, col = 'black', linetype = "dashed") +
+  # Todas las rectas
+  geom_abline(data = lines, aes(intercept = b0, slope = b1, color = mse), alpha = 0.4) +
+  # Labels y theme
+  labs(x = "Edad", y = "Salario promedio") +
+  theme_minimal()
+```
+```{r}
+# Graficamos las rectas con colores en log
+ggplot(df, aes(age, mean_salary)) +
+  # Data
+  geom_point(size = 2) +
+  # Guess inicial
+  geom_abline(intercept = b0_init_guess, slope = b1_init_guess, linewidth = 1, col = 'black', linetype = "dashed") +
+  # Todas las rectas
+  geom_abline(data = lines, aes(intercept = b0, slope = b1, color = mse_log_scale), alpha = 0.4) +
+  # Labels y theme
+  labs(x = "Edad", y = "Salario promedio") +
+  theme_minimal()
+```
+
+```{r}
+# Buscamos la recta con menor error y la comparamos con la solución analítica
+best_line <- lines %>% slice_min(order_by = mse, n = 1)
+best_line
+
+mod <- lm(formula = mean_salary ~ age, data = df)
+tidy(mod)
+
+ggplot(df, aes(age, mean_salary)) +
+  # Data
+  geom_point(size = 2) +
+  # Mejor recta encontrada al azar
+  geom_abline(intercept = best_line$b0, slope = best_line$b1, linewidth = 1.5, col = 'black') +
+  # Mejor recta analítica
+  geom_abline(intercept = mod$coefficients[1], slope = mod$coefficients[2], linewidth = 1, col = 'brown1') +
+  # Labels y theme
+  labs(x = "Edad", y = "Salario promedio") +
+  theme_minimal()
+```
+
+## Estrategia 2: Control (o descenso por el gradiente)
+Una alternativa mucho más eficiente es usar **descenso por el gradiente**.
+En lugar de evaluar todas las posibles rectas, calculamos cómo cambiar los parámetros $(\beta_0, \beta_1)$ para reducir el MSE, y vamos ajustándolos en esa dirección.
+
+Para calcular la dirección en la que tenemos que moverlos vamos a necesitar el gradiente de MSE$(\beta_0, \beta_1)$. Como en general no tenemos la fórmula exacta del gradiente, lo estimamos numéricamente usando diferencias finitas:
+$$
+[\nabla f(x)]_i \approx \frac{f(x+h\,e_i)-f(x)}{h},\quad i=1,\dots,n.
+$$
+
+```{r}
+numerical_grad <- function(fn, x, h = 1e-6) {
+  n <- length(x)
+  g <- numeric(n)
+  fn_x <- fn(x)
+  for (i in seq_len(n)) {
+    x_p_h <- x
+    x_p_h[i] <- x_p_h[i] + h
+    g[i] <- (fn(x_p_h) - fn_x) / h
+  }
+  g
+}
+```
+**Nota**: En este caso, y en muchísimos otros, podríamos calcular el gradiente de forma analítica. Sin embargo, vamos a proceder como si no lo conociéramos, para ver una estrategia más general que también sirve cuando el gradiente no podemos calcularlo o es difícil de obtener.
+
+El algoritmo de **descenso por el gradiente** es un método iterativo que sirve de forma general para minimizar una función.  
+La idea es partir de un punto inicial $\boldsymbol{x}_0$ (en nuestro caso la tupla $(\beta_0, \beta_1)$, e ir actualizando los parámetros siguiendo la dirección opuesta al gradiente:
+$$
+\boldsymbol{x}_{k+1} = \boldsymbol{x}_k - \eta \nabla f(\boldsymbol{x}_k)
+$$
+Donde $\nabla f(\boldsymbol{x}_k)$ es el gradiente de la función en ese punto (dirección de mayor crecimiento) y $\eta$ es lo que se denomina _learning rate_; es el valor que controla el tamaño del paso.
+```{r}
+gradient_descent <- function(fn, par0, learning_rate, n_iter) {
+  # fn: función objetivo
+  # par0: vector inicial
+
+  par <- par0
+  
+  f_prev <- fn(par)
+  # path: camino de (b0, b1) desde par0 hasta el final
+  path <- data.frame(x = par[1], y = par[2], z = f_prev)
+
+  for (k in seq_len(n_iter)) {
+	# -- Algoritmo de GD
+    g <- numerical_grad(fn, par)
+    new_par <- par - learning_rate * g
+    f_new <- fn(new_par)
+
+    # Solo actualizo los parámetros si f_new < f_prev
+    if (f_new < f_prev) {
+      par <- new_par
+      f_prev <- f_new
+    }
+	# --
+
+	# Guardo los valores del paso
+    path <- rbind(path, data.frame(x = par[1], y = par[2], z = f_new))
+  }
+
+  list(par = par, value = fn(par), path = path)
+}
+
+# Y definimos también una fn objetivo compatible
+obj_fn <- function(par) {
+  compute_mse_lm(par, x_data = df$age, y_data = df$mean_salary)
+}
+```
+
+Ahora sí, tenemos todo para calcular la recta
+```{r}
+par0 <- c(0, 0)
+learning_rate <- 1e-4
+n_iter <- 5000
+
+# Resultado de descenso por el gradiente
+res <- gradient_descent(fn = obj_fn, par0 = par0, learning_rate = learning_rate, n_iter = n_iter)
+res$par
+
+# Resultado analítico
+mod$coefficients
+
+b0 = res$par[1]
+b1 = res$par[2]
+ggplot(df, aes(age, mean_salary)) +
+  # Data
+  geom_point(size = 2) +
+  # Mejor recta encontrada por nuestra versión de descenso por el gradiente 
+  geom_abline(intercept = b0, slope = b1, linewidth = 1.5, col = 'black') +
+  # Mejor recta analítica
+  geom_abline(intercept = mod$coefficients[1], slope = mod$coefficients[2], linewidth = 1, col = 'brown1') +
+  # Labels y theme
+  labs(x = "Edad", y = "Salario promedio") +
+  theme_minimal()
+```
+
+Vemos que la pendiente no está tan mal, pero la ordenada al origen está muy lejos de ser la correcta.
+Para ganar intuición de lo que está pasando, podemos visualizar la superficie del MSE alrededor de la trayectoria y el camino que recorre el algoritmo desde el inicio hasta el mínimo.
+
+```{r}
+# Hacemos grilla alrededor de la trayectoria en la que calculo MSE
+range_b0 <- range(res$path$x)
+range_b1 <- range(res$path$y)
+pad_b0 <- 0.2*diff(range_b0)
+pad_b1 <- 0.2*diff(range_b1)
+
+X <- seq(range_b0[1] - pad_b0, range_b0[2] + pad_b0, length.out = 160)
+Y <- seq(range_b1[1] - pad_b1, range_b1[2] + pad_b1, length.out = 160)
+
+f_grid <- Vectorize(function(b0, b1) obj_fn(c(b0, b1)))
+Z <- t(outer(X, Y, f_grid))
+
+# Graficamos con plotly la superficie que calculamos y la trayectoria de minimización
+plot_ly(x = ~X, y = ~Y, z = ~Z) %>%
+  # Superficie de MSE(b0, b1)
+  add_surface(opacity = 0.9, showscale = FALSE,
+              colorscale = list(c(0, "#323B41"), c(1, "#6F8AA6"))) %>%
+  # Trayectoria del algoritmo
+  add_trace(x = ~res$path$x, y = ~res$path$y, z = ~res$path$z,
+            type = "scatter3d", mode = "lines", name = "GD path",
+            line = list(color = "#C95E61", width = 6)) %>%
+  # Punto al inicio y al final
+  add_markers(x = res$path$x[1], y = res$path$y[1], z = res$path$z[1],
+              name = "start", marker = list(color = "#6F8AA6", size = 6)) %>%
+  add_markers(x = tail(res$path$x,1), y = tail(res$path$y,1), z = tail(res$path$z,1),
+              name = "end", marker = list(color = "#323B41", size = 6)) %>%
+  # Labels
+  layout(scene = list(
+    xaxis = list(title = "b0"),
+    yaxis = list(title = "b1"),
+    zaxis = list(title = "MSE")
+  ))
+```
+
+Para ver el efecto del learning_rate, repetimos el procedimiento con un valor mayor y observamos cómo cambia la trayectoria.
+
+```{r}
+# Repito todo lo anterior pero cambio el learning_rate de 1e-4 a 1e-3
+par0 <- c(0, 0)
+learning_rate <- 1e-3
+n_iter <- 5000
+
+res <- gradient_descent(fn = obj_fn, par0 = par0, learning_rate = learning_rate, n_iter = n_iter)
+range_b0 <- range(res$path$x)
+range_b1 <- range(res$path$y)
+pad_b0 <- 0.2*diff(range_b0)
+pad_b1 <- 0.2*diff(range_b1)
+X <- seq(range_b0[1] - pad_b0, range_b0[2] + pad_b0, length.out = 160)
+Y <- seq(range_b1[1] - pad_b1, range_b1[2] + pad_b1, length.out = 160)
+f_grid <- Vectorize(function(b0, b1) obj_fn(c(b0, b1)))
+Z <- t(outer(X, Y, f_grid))
+
+plot_ly(x = ~X, y = ~Y, z = ~Z) %>%
+  add_surface(opacity = 0.9, showscale = FALSE,
+              colorscale = list(c(0, "#323B41"), c(1, "#6F8AA6"))) %>%
+  add_trace(x = ~res$path$x, y = ~res$path$y, z = ~res$path$z,
+            type = "scatter3d", mode = "lines", name = "GD path",
+            line = list(color = "#C95E61", width = 6)) %>%
+  add_markers(x = res$path$x[1], y = res$path$y[1], z = res$path$z[1],
+              name = "start", marker = list(color = "#6F8AA6", size = 6)) %>%
+  add_markers(x = tail(res$path$x,1), y = tail(res$path$y,1), z = tail(res$path$z,1),
+              name = "end", marker = list(color = "#323B41", size = 6)) %>%
+  layout(scene = list(
+    xaxis = list(title = "b0"),
+    yaxis = list(title = "b1"),
+    zaxis = list(title = "MSE")
+  ))
+res$par
+```
+
+## Opción 3: Más y menos control
+El algoritmo de descenso por el gradiente que implementamos es un poco... rústico.
+Existen algoritmos de este tipo que son más estables y eficientes (mejor estimación de las derivadas, learning rate variable, estimación de la curvatura, etc).
+En `R` podemos acceder a ellos mediante la función `optim()`.
+
+```{r}
+# Corremos la optimización
+res <- optim(
+  par = c(0, 0),
+  fn  = compute_mse_lm, # función que queremos minimizar
+  x = df$age, y = df$mean_salary,
+  method = "BFGS", # algoritmo de optimización
+)
+res$par
+
+mod <- lm(formula = mean_salary ~ age, data = df)
+mod$coefficients
+```
+
+## Extensión: modelos no lineales
+
+Una ventaja de los modelos de descenso es que no se limitan a modelos lineales. Veamos un ejemplo de un modelo no lineal para el dataset extendido de 0 a 60 años.
+
+```{r}
+# Cargamos el dataset con más datos que antes
+df_all <- read_csv("mean_salary_vs_age.csv")
+df_0_60 <- df_all %>% filter(between(age, 0, 60))
+ggplot(df_0_60, aes(x = age, y = mean_salary)) +
+  geom_point(alpha = 0.8) +
+  labs(
+    x = "Edad",
+    y = "Salario promedio",
+  ) +
+  theme_minimal()
+```
+La función propuesta es:
+$$
+E(Y|X) = a - \exp(-b x + c),
+$$
+donde $a$, $b$ y $c$ son parámetros libres que queremos optimizar.
+
+```{r}
+compute_mse_th_exp <- function(par, x_data, y_data) {
+  a <- par[1]
+  b <- par[2]
+  c <- par[3]
+  y_hat <- a - exp(-b*x_data + c)
+  diff <- y_hat - y_data
+  mean(diff ^ 2)
+}
+
+res <- optim(
+  par = c(max(df_0_60$mean_salary), 0.0, 0.0),
+  fn  = compute_mse_th_exp,
+  x = df_0_60$age, y = df_0_60$mean_salary,
+  method = "BFGS",
+)
+a <- res$par[1]
+b <- res$par[2]
+c <- res$par[3]
+
+ggplot(df_0_60, aes(x = age, y = mean_salary)) +
+  geom_point(alpha = 0.8) +
+  geom_function(fun = function(x) a-exp(-b*x + c),
+                linewidth = 1.5, col = "#C95E61") +
+  labs(
+	x = "Edad",
+	y = "Salario promedio",
+  ) +
+  theme_minimal()
+```

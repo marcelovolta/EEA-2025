@@ -70,3 +70,12 @@ Trabajo con datasets (`dplyr` y  `tidyr`), fechas (`lubridate`), strings (`strin
 #### Dataset
 
 - [mean_salary_vs_age.csv](<clase 4/mean_salary_vs_age.csv>)
+
+
+### Clase 4: purrr y Regresión lineal simple a lo ML
+
+#### Apuntes
+
+- [Clase 4 - Cuaderno HTML](<clase 4/clase 4.html>)
+- [Clase 4 (.qmd)](<clase 4/clase 4.qmd>)
+
